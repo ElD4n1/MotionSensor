@@ -4,7 +4,7 @@ import threading
 from indoorpersontrackerapi import IndoorPersonTrackerAPI
 from configparser import ConfigParser
 
-def sensorloop(gpio_pin, identifier):
+def sensorloop(gpio_pin, identifier, tracker):
     while True:
         i=GPIO.input(gpio_pin)
         if i==1:                 #When output from motion sensor is HIGH
@@ -19,18 +19,19 @@ class SensorThread (threading.Thread):
         threading.Thread.__init__(self)
         self.gpio_pin = gpio_pin
         self.identifier = identifier
+	
     def run(self):
-        print("Started thread for sensor on pin {}".format(self.gpio_pin))
+        print("Started thread for sensor on pin {}\nConnecting to web service...".format(self.gpio_pin))
+        tracker = IndoorPersonTrackerAPI()
         success = tracker.register(self.identifier)
         if success:
-            sensorloop(self.gpio_pin, self.identifier)
+            print("{}: Connection is up!".format(self.identifier))
+            sensorloop(self.gpio_pin, self.identifier, tracker)
         else:
             print("{}: error: sensor has not been accepted on server".format(self.identifier))
 
 config = ConfigParser()
 config.read('config.ini')
-
-tracker = IndoorPersonTrackerAPI()
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
